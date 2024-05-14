@@ -38,7 +38,7 @@ def create_header(root: etree.Element,
         release_date = row['release_converted']
         if isinstance(release_date, str):
             release_date_normalized = datetime.strptime(release_date, '%d.%m.%Y').strftime('%Y-%m-%d')
-            etree.SubElement(bibl, 'date', when=release_date).text = release_date_normalized
+            etree.SubElement(bibl, 'date', when=release_date_normalized).text = release_date
         link = row['link']
         etree.SubElement(bibl, 'ref', target=link).text = row['source']
         download_links = row['download_links']
