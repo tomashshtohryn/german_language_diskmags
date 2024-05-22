@@ -40,7 +40,7 @@ def decode_text(binary_text: bytes, threshold: float):
     :param threshold:
     :return:
     """
-    if not isinstance(binary_text, bytes):
+    if not isinstance(binary_text, bytes) or len(binary_text) == 0:
         return None, None, None, 'Nicht-binäre Datei'
     entr = check_entropy(binary_text)
     if entr >= 7:
@@ -171,6 +171,8 @@ def insert_newlines(text: str):
         else:
             continue
 
+    if not logprobs:
+        return text, 0
     best_col_len, logprob = max(logprobs.items(), key=lambda i: i[1])
     rows = [''.join(x) for x in more_itertools.chunked(text, n=best_col_len)]
     return '\n'.join(rows), best_col_len

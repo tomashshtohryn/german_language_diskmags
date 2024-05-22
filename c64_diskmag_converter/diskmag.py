@@ -1,5 +1,4 @@
 import os
-
 from c64_diskmag_converter.xml_markup_creator import *
 from d64 import DiskImage
 import pandas as pd
@@ -27,7 +26,13 @@ class DiskmagC64:
     def get_directory(self):
         try:
             with self.image as disk_image:
-                return list(disk_image.directory())
+                directory = []
+                for file in disk_image.directory():
+                    try:
+                        directory.append(file)
+                    except Exception as e:
+                        directory.append('')
+                return directory
         except (FileNotFoundError, ValueError) as e:
             return None
 
@@ -41,13 +46,18 @@ class DiskmagC64:
                     try:
                         filename = entry.name.decode(encoding='petscii_c64en_lc', errors='replace')
                         directory_entry = directory[index]
-                        filetype = FIND_FILETYPES.findall(directory_entry)[0]
+                        if directory_entry == '':
+                            filetype = 'Unknown'
+                        else:
+                            filetype = FIND_FILETYPES.findall(directory_entry)[0]
                         content = disk_image.path(entry.name)
                         content = content.open().read()
+                        if filetype == 'PRG':
+                            content = content[2:]
                         yield filename, filetype, content
-                    except ValueError:
+                    except (ValueError, AttributeError):
                         yield filename, filetype, None
-        except (FileNotFoundError, ValueError) as e:
+        except (FileNotFoundError, ValueError):
             return None
 
     def convert_to_tei(self, char_threshold: float):
@@ -73,5 +83,6 @@ class DiskmagC64:
                                              method='xml')
                 xml_file.write(xml_content)
         except Exception as e:
+            print(e, tei_path)
             os.remove(tei_path)
             return f'Error accessing disk image: {str(e)}'
