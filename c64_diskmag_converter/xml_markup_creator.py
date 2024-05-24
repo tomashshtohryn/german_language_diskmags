@@ -101,6 +101,7 @@ def attach_text_div(parent, content, filename, xml_id, file_ext, char_threshold)
         else:
             etree.SubElement(div, 'gap', reason='irrelevant')
     else:
+        etree.SubElement(note_grp, 'note', type='filetype').text = 'Beschädigte Datei'
         etree.SubElement(div, 'gap', reason='irrelevant')
 
     return div

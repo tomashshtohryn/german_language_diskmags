@@ -17,6 +17,8 @@ BEGINNINGS = pd.read_csv(begin_trigrams, encoding='utf-8')
 UMLAUT_TRIGRAMS = pd.read_csv(umlaut_trigrams, encoding='utf-8')
 # Regular expression for detecting trigrams with german umlauts and eszett
 UMLAUTS = list('äöüÄÖÜß')
+DOUBLE_UMLAUTS = {'ae': 'ä', 'Ae': 'Ä', 'oe': 'ö', 'Oe': 'Ö', 'ue': 'ü', 'Ue': 'ü'}
+FIND_DOUBLE_UMLAUTS = re.compile('|'.join([f"{key}(?!$)" for key in DOUBLE_UMLAUTS.keys()]))
 # [@£\[\]↑;:]
 FIND_UMLAUT_TRIGRAM = regex.compile(r'[a-zA-Z ]'
                                     r'([^\P{So}\N{CHECK MARK}\N{REPLACEMENT CHARACTER}]|[\uf110-\ufffc])'
@@ -90,9 +92,7 @@ def replace_alt_umlauts(string: str) -> str:
     :param string: The string which should be processed by function
     :return: string with fixed umlauts
     """
-    alternative_umlauts = {'ae': 'ä', 'Ae': 'Ä', 'oe': 'ö', 'Oe': 'Ö', 'ue': 'ü', 'Ue': 'ü', 'ss': 'ß'}
-    pattern = re.compile('|'.join(alternative_umlauts.keys()))
-    fixed_string = pattern.sub(lambda match: alternative_umlauts[match.group(0)], string)
+    fixed_string = FIND_DOUBLE_UMLAUTS.sub(lambda match: DOUBLE_UMLAUTS[match.group(0)], string)
     return fixed_string
 
 

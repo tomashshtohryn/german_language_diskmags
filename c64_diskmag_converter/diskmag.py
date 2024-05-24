@@ -31,7 +31,7 @@ class DiskmagC64:
                     try:
                         directory.append(file)
                     except Exception as e:
-                        directory.append('')
+                        directory.append(None)
                 return directory
         except (FileNotFoundError, ValueError) as e:
             return None
@@ -46,7 +46,7 @@ class DiskmagC64:
                     try:
                         filename = entry.name.decode(encoding='petscii_c64en_lc', errors='replace')
                         directory_entry = directory[index]
-                        if directory_entry == '':
+                        if not directory_entry:
                             filetype = 'Unknown'
                         else:
                             filetype = FIND_FILETYPES.findall(directory_entry)[0]
