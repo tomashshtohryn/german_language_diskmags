@@ -30,10 +30,12 @@ MATCH_BEGINNING_TRIGRAM = regex.compile(r'\p{Latin}[.,!?; ][\p{Latin} ]')
 MATCH_2ND_BEGINNING_TRIGRAM = regex.compile(r'[ \p{Latin}]{3}')
 BEGINNINGS_lookup = {trigram: percentage for trigram, percentage in zip(BEGINNINGS['trigram'], BEGINNINGS['percentage'])}
 # Possible Commodore 64 encodings
-ENCODING_MAPPING = {0: 'petscii_c64en_lc',
-                    1: 'ascii',
-                    2: 'screencode_c64_lc'}
+ENCODING_MAPPING = {0: ['petscii_c64en_lc', 'PETSCII'],
+                    1: ['ascii', 'ASCII'],
+                    2: ['screencode_c64_lc', 'Screencode']}
 
+def char_to_c64_hex(char, encoding):
+    return f'0x{ord(char):02X}'
 
 def decode_text(binary_text: bytes, threshold: float):
     """
@@ -43,10 +45,10 @@ def decode_text(binary_text: bytes, threshold: float):
     :return:
     """
     if not isinstance(binary_text, bytes) or len(binary_text) == 0:
-        return None, None, None, 'Nicht-binäre Datei'
+        return None, None, None, 'Nicht-binäre Datei', None, None
     entr = check_entropy(binary_text)
     if entr >= 7:
-        return entr, None, None, 'Komprimierte Datei/Assembler Code'
+        return entr, None, None, 'Komprimierte Datei/Assembler Code', None, None
 
     texts = []
     sum_chars = []
@@ -55,7 +57,7 @@ def decode_text(binary_text: bytes, threshold: float):
             decoded = binary_text.replace(b'\n\r', b'\r').replace(b'\r\n', b'\r').replace(b'\n', b'\r')
             decoded = decoded.decode(encoding='petscii_c64en_lc', errors='replace').replace('\r', '\n')
         else:
-            decoded = binary_text.decode(encoding=encoding, errors='replace')
+            decoded = binary_text.decode(encoding=encoding[0], errors='replace')
         decoded = REPLACE_UNRECOGNIZED_CHARS.sub('\N{REPLACEMENT CHARACTER}', decoded)
         decoded = decoded.replace(u'\xa0', ' ')
         texts.append(decoded)
@@ -63,12 +65,13 @@ def decode_text(binary_text: bytes, threshold: float):
         sum_chars.append(alpha_chars / len(decoded))
     best_encoding = np.argmax(np.array(sum_chars))
     if max(sum_chars) < threshold:
-        return entr, None, None, 'Programmcode'
+        return entr, None, None, 'Programmcode', None, None
     else:
         text = texts[best_encoding]
         text, mapping = replace_custom_umlauts(text)
+        mapping = {char_to_c64_hex(key, ENCODING_MAPPING[best_encoding][0]): value for key, value in mapping.items()}
         text, best_line_length = insert_newlines(text)
-        return entr, text, best_line_length, 'Textdokument'
+        return entr, text, best_line_length, 'Textdokument', mapping, ENCODING_MAPPING[best_encoding][1]
 
 
 def check_entropy(binary_text: bytes) -> int:
@@ -136,9 +139,9 @@ def replace_custom_umlauts(text: str):
         return text, {}
 
     trans = dict(zip(replacement_chars, best_mapping))
-    substitutions = [(i, orig, trans[orig]) for i, orig in enumerate(text) if orig in trans.keys()]
+    # substitutions = [(i, orig, trans[orig]) for i, orig in enumerate(text) if orig in trans.keys()]
     text = text.translate(str.maketrans(trans))
-    return text, substitutions
+    return text, trans
 
 
 def insert_newlines(text: str):

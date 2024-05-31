@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from lxml import etree
 from c64_diskmag_converter.text_processing import *
@@ -89,11 +90,14 @@ def attach_text_div(parent, content, filename, xml_id, file_ext, char_threshold)
     note_grp = etree.SubElement(div, 'noteGrp')
     etree.SubElement(note_grp, 'note', type='filename_extension').text = file_ext
     if content:
-        entr, text, col_length, filetype = decode_text(binary_text=content, threshold=char_threshold)
+        entr, text, col_length, filetype, mapping, encoding = decode_text(binary_text=content, threshold=char_threshold)
         etree.SubElement(note_grp, 'note', type='filetype').text = filetype
         etree.SubElement(note_grp, 'note', type='entropy').text = str(entr)
         if text:
             etree.SubElement(note_grp, 'note', type='line_length').text = str(col_length)
+            etree.SubElement(note_grp, 'note', type='encoding').text = encoding
+            if mapping:
+                etree.SubElement(note_grp, 'note', type='umlaut_mapping').text = str(mapping)
             p = etree.SubElement(div, 'p', attrib={'rend': 'hidden'})
             for i, line in enumerate(text.split('\n'), start=1):
                 lb = etree.SubElement(p, 'lb', attrib={'n': str(i), 'break': 'yes'})

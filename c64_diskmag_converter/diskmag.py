@@ -79,7 +79,7 @@ class DiskmagC64:
                 xml_content = etree.tostring(tree,
                                              pretty_print=True,
                                              xml_declaration=True,
-                                             encoding='utf-8',
+                                             encoding='UTF-8',
                                              method='xml')
                 xml_file.write(xml_content)
         except Exception as e:
