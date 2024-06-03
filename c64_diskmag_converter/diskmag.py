@@ -1,10 +1,10 @@
 import os
 from c64_diskmag_converter.xml_markup_creator import *
+from c64_diskmag_converter.text_processing import *
 from d64 import DiskImage
 import pandas as pd
 from pathlib import Path
 import re
-
 
 data_dir = os.path.join(os.path.dirname(__file__), 'data')
 issues = os.path.join(data_dir, 'c64_diskmag_issues.csv')
@@ -33,7 +33,6 @@ class DiskmagC64:
         d64_files = list(parent_dir.glob('*.d64'))
         return len(d64_files) > 1
 
-
     def get_directory(self):
         try:
             with self.image as disk_image:
@@ -58,16 +57,16 @@ class DiskmagC64:
                         filename = entry.name.decode(encoding='petscii_c64en_lc', errors='replace')
                         directory_entry = directory[index]
                         if not directory_entry:
-                            filetype = 'Unknown'
+                            file_ext = 'Unknown'
                         else:
-                            filetype = FIND_FILETYPES.findall(directory_entry)[0]
+                            file_ext = FIND_FILETYPES.findall(directory_entry)[0]
                         content = disk_image.path(entry.name)
                         content = content.open().read()
-                        if filetype == 'PRG':
+                        if file_ext == 'PRG':
                             content = content[2:]
-                        yield filename, filetype, content
+                        yield filename, file_ext, content
                     except (ValueError, AttributeError):
-                        yield filename, filetype, None
+                        yield filename, file_ext, None
         except (FileNotFoundError, ValueError):
             return None
 
@@ -84,9 +83,13 @@ class DiskmagC64:
                 body = etree.SubElement(text_elem, 'body')
                 for index, entry in enumerate(self.contents):
                     xml_id = index + 1
-                    filename, filetype, content = entry
-
-                    attach_text_div(body, content, filename, xml_id, filetype, char_threshold)
+                    filename, file_ext, content = entry
+                    metadata = TextMetaData.from_binary(filename=filename,
+                                                        xml_id=xml_id,
+                                                        file_ext=file_ext,
+                                                        content=content,
+                                                        char_threshold=char_threshold)
+                    attach_text_div(body, metadata)
                 tree = etree.ElementTree(root)
                 etree.indent(tree)
                 xml_content = etree.tostring(tree,

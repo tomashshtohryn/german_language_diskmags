@@ -71,44 +71,38 @@ def attach_front(parent: etree.Element, directory: list) -> etree.SubElement:
     return front
 
 
-def attach_text_div(parent, content, filename, xml_id, file_ext, char_threshold) -> etree.SubElement:
+def attach_text_div(parent, metadata: TextMetaData) -> etree.SubElement:
     """
 
     :param parent:
-    :param content:
-    :param filename:
-    :param xml_id:
-    :param file_ext:
-    :param char_threshold:
+    :param metadata:
     :return:
     """
     div = etree.SubElement(parent, 'div')
     div.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-    div.set('{http://www.w3.org/XML/1998/namespace}id', f'file_{xml_id}')
-    head = etree.SubElement(div, 'head')
-    head.text = filename
+    div.set('{http://www.w3.org/XML/1998/namespace}id', f'file_{metadata.xml_id}')
+    etree.SubElement(div, 'head').text = metadata.filename
     note_grp = etree.SubElement(div, 'noteGrp')
-    etree.SubElement(note_grp, 'note', type='filename_extension').text = file_ext
-    if content:
-        entr, text, col_length, filetype, mapping, encoding = decode_text(binary_text=content, threshold=char_threshold)
-        etree.SubElement(note_grp, 'note', type='filetype').text = filetype
-        etree.SubElement(note_grp, 'note', type='entropy').text = str(entr)
-        if text:
-            etree.SubElement(note_grp, 'note', type='line_length').text = str(col_length)
-            etree.SubElement(note_grp, 'note', type='encoding').text = encoding
-            if mapping:
-                etree.SubElement(note_grp, 'note', type='umlaut_mapping').text = str(mapping)
-            p = etree.SubElement(div, 'p', attrib={'rend': 'hidden'})
-            for i, line in enumerate(text.split('\n'), start=1):
-                lb = etree.SubElement(p, 'lb', attrib={'n': str(i), 'break': 'yes'})
-                if i != len(text.split('\n')):
-                    lb.tail = f'{line}\n{" "*10}'
-                else:
-                    lb.tail = f'{line}\n{" "*8}'
-        else:
-            etree.SubElement(div, 'gap', reason='irrelevant')
+    etree.SubElement(note_grp, 'note', type='filename_extension').text = metadata.file_ext
+    if metadata.filetype:
+        etree.SubElement(note_grp, 'note', type='filetype').text = metadata.filetype
+    if metadata.entropy is not None:
+        etree.SubElement(note_grp, 'note', type='entropy').text = str(metadata.entropy)
+    if metadata.encoding:
+        etree.SubElement(note_grp, 'note', type='encoding').text = metadata.encoding
+    if metadata.text:
+        etree.SubElement(note_grp, 'note', type='line_length').text = str(metadata.col_length)
+        if metadata.mapping:
+            etree.SubElement(note_grp, 'note', type='umlaut_mapping').text = str(metadata.mapping)
+        p = etree.SubElement(div, 'p', attrib={'rend': 'hidden'})
+        text = metadata.text.split('\n')
+        for i, line in enumerate(text, start=1):
+            lb = etree.SubElement(p, 'lb', attrib={'n': str(i), 'break': 'yes'})
+            if i != len(text):
+                lb.tail = f'{line}\n{" " * 10}'
+            else:
+                lb.tail = f'{line}\n{" " * 8}'
     else:
-        etree.SubElement(note_grp, 'note', type='filetype').text = 'Beschädigte Datei'
         etree.SubElement(div, 'gap', reason='irrelevant')
 
     return div

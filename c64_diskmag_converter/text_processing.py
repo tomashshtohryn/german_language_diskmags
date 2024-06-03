@@ -8,6 +8,8 @@ import pandas as pd
 import re
 import regex
 from scipy.stats import entropy
+from dataclasses import dataclass, field
+from typing import Optional, Dict, Any, Tuple
 
 
 data_dir = os.path.join(os.path.dirname(__file__), 'data')
@@ -65,7 +67,7 @@ def decode_text(binary_text: bytes, threshold: float):
         sum_chars.append(alpha_chars / len(decoded))
     best_encoding = np.argmax(np.array(sum_chars))
     if max(sum_chars) < threshold:
-        return entr, None, None, 'Programmcode', None, None
+        return entr, None, None, 'Programmcode', None, ENCODING_MAPPING[best_encoding][1]
     else:
         text = texts[best_encoding]
         text, mapping = replace_custom_umlauts(text)
@@ -179,3 +181,36 @@ def insert_newlines(text: str):
     best_col_len, logprob = max(logprobs.items(), key=lambda i: i[1])
     rows = [''.join(x) for x in more_itertools.chunked(text, n=best_col_len)]
     return '\n'.join(rows), best_col_len
+
+
+@dataclass
+class TextMetaData:
+    filename: str
+    xml_id: int
+    file_ext: str
+    entropy: Optional[float] = None
+    text: Optional[str] = None
+    col_length: Optional[int] = None
+    filetype: Optional[str] = None
+    mapping: Optional[Dict[str, Any]] = field(default_factory=dict)
+    encoding: Optional[str] = None
+
+    @classmethod
+    def from_binary(cls, filename: str,
+                    xml_id: int,
+                    file_ext: str,
+                    content: bytes,
+                    char_threshold: float):
+        if not content:
+            return cls(filename, xml_id, file_ext, filetype='Beschädigte Datei')
+
+        entr, text, col_length, filetype, mapping, encoding = decode_text(content, char_threshold)
+        return cls(filename=filename,
+                   xml_id=xml_id,
+                   file_ext=file_ext,
+                   entropy=entr,
+                   text=text,
+                   col_length=col_length,
+                   filetype=filetype,
+                   mapping=mapping,
+                   encoding=encoding)
