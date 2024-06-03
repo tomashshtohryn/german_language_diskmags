@@ -4,7 +4,7 @@ from lxml import etree
 from c64_diskmag_converter.text_processing import *
 
 
-def create_header(root: etree.Element,
+def attach_header(root: etree.Element,
                   series: str,
                   issue: str,
                   principal: str,
@@ -101,7 +101,10 @@ def attach_text_div(parent, content, filename, xml_id, file_ext, char_threshold)
             p = etree.SubElement(div, 'p', attrib={'rend': 'hidden'})
             for i, line in enumerate(text.split('\n'), start=1):
                 lb = etree.SubElement(p, 'lb', attrib={'n': str(i), 'break': 'yes'})
-                lb.tail = f'{line}\n'
+                if i != len(text.split('\n')):
+                    lb.tail = f'{line}\n{" "*10}'
+                else:
+                    lb.tail = f'{line}\n{" "*8}'
         else:
             etree.SubElement(div, 'gap', reason='irrelevant')
     else:

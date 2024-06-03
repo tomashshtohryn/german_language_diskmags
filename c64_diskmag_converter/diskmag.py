@@ -22,6 +22,17 @@ class DiskmagC64:
         self.record = ISSUES[ISSUES['issue_normalized'] == self.issue]
         self.contents = self.get_contents()
         self.directory = self.get_directory()
+        self.is_partial = self.check_d64_files_in_parent()
+        if self.is_partial:
+            self.image_number = int(self.filename[-1])
+        else:
+            self.image_number = 1
+
+    def check_d64_files_in_parent(self):
+        parent_dir = self.path.parent
+        d64_files = list(parent_dir.glob('*.d64'))
+        return len(d64_files) > 1
+
 
     def get_directory(self):
         try:
@@ -67,15 +78,17 @@ class DiskmagC64:
         try:
             with open(tei_path, 'wb') as xml_file:
                 root = etree.Element('TEI', xmlns='http://www.tei-c.org/ns/1.0')
-                create_header(root, self.diskmag, self.issue, 'Tomash Shtohryn', self.record)
+                attach_header(root, self.diskmag, self.issue, 'Tomash Shtohryn', self.record)
                 text_elem = etree.SubElement(root, 'text')
                 attach_front(text_elem, self.directory)
                 body = etree.SubElement(text_elem, 'body')
                 for index, entry in enumerate(self.contents):
                     xml_id = index + 1
                     filename, filetype, content = entry
+
                     attach_text_div(body, content, filename, xml_id, filetype, char_threshold)
                 tree = etree.ElementTree(root)
+                etree.indent(tree)
                 xml_content = etree.tostring(tree,
                                              pretty_print=True,
                                              xml_declaration=True,
