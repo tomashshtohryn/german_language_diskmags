@@ -1,6 +1,5 @@
-import os
-from c64_diskmag_converter.xml_markup_creator import *
-from c64_diskmag_converter.text_processing import *
+from c64_diskmag_converter import *
+from c64_diskmag_converter import *
 from d64 import DiskImage
 import pandas as pd
 from pathlib import Path
@@ -26,7 +25,7 @@ class DiskmagC64:
         if self.is_partial:
             self.image_number = int(self.filename[-1])
         else:
-            self.image_number = 1
+            self.image_number = None
 
     def check_d64_files_in_parent(self):
         parent_dir = self.path.parent
@@ -77,7 +76,7 @@ class DiskmagC64:
         try:
             with open(tei_path, 'wb') as xml_file:
                 root = etree.Element('TEI', xmlns='http://www.tei-c.org/ns/1.0')
-                attach_header(root, self.diskmag, self.issue, 'Tomash Shtohryn', self.record)
+                attach_header(root, self.image_number, self.diskmag, self.issue, 'Tomash Shtohryn', self.record)
                 text_elem = etree.SubElement(root, 'text')
                 attach_front(text_elem, self.directory)
                 body = etree.SubElement(text_elem, 'body')

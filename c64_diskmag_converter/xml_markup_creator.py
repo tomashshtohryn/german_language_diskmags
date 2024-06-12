@@ -1,39 +1,45 @@
-import json
-from datetime import datetime
-from lxml import etree
-from c64_diskmag_converter.text_processing import *
+from c64_diskmag_converter import *
 
 
 def attach_header(root: etree.Element,
+                  image_number: int,
                   series: str,
                   issue: str,
                   principal: str,
                   record: pd.Series) -> etree.SubElement:
     """
-    The function creates the TEI-Header element
+    Function to attach a header to TEI document.
+    :param root:
+    :param image_number:
+    :param series:
     :param issue:
-    :param root: the root element of the tree
-    :param series: the title of the diskmag
-    :param principal: the name of the editor
-    :param record: the metadata of issue as dataframe
-    :return: etree element <teiHeader>
+    :param principal:
+    :param record:
+    :return:
     """
     header = etree.SubElement(root, 'teiHeader')
     filedesc = etree.SubElement(header, 'fileDesc')
     titlestmt = etree.SubElement(filedesc, 'titleStmt')
-    title = etree.SubElement(titlestmt, 'title')
-    title.text = issue
-    principal_name = etree.SubElement(titlestmt, 'principal')
-    principal_name.text = principal
+    if image_number:
+        title = etree.SubElement(titlestmt, 'title', type='full')
+        etree.SubElement(title, 'title', type='main').text = issue
+        etree.SubElement(title, 'title', type='sub').text = f'Teil {image_number}'
+    else:
+        etree.SubElement(titlestmt, 'title').text = issue
+    etree.SubElement(titlestmt, 'principal').text = principal
     pubstmt = etree.SubElement(filedesc, 'publicationStmt')
     etree.SubElement(pubstmt, 'p').text = 'Erzeugt aus dem Abbild eines Diskettenmagazins'
     etree.SubElement(pubstmt, 'p').text = 'Nachnutzung eingeschränkt'
     sourcedesc = etree.SubElement(filedesc, 'sourceDesc')
-    for index, row in record.iterrows():
+    for _, row in record.iterrows():
         bibl = etree.SubElement(sourcedesc, 'bibl', type='diskmag')
         etree.SubElement(bibl, 'title', level='j').text = row['issue']
         etree.SubElement(bibl, 'series').text = series
         group = row['group']
+        origin = row['origin']
+        if isinstance(origin, str):
+            for country in origin.split('; '):
+                etree.SubElement(bibl, 'pubPlace').text = country
         if isinstance(group, str):
             etree.SubElement(bibl, 'publisher').text = group
         release_date = row['release_converted']
@@ -46,6 +52,15 @@ def attach_header(root: etree.Element,
         if isinstance(download_links, str):
             for d in download_links.split(', '):
                 etree.SubElement(bibl, 'ref', target=d)
+
+    profiledesc = etree.SubElement(header, 'profileDesc')
+    language = record['language'].tolist()[0]
+    langusage = etree.SubElement(profiledesc, 'langUsage')
+    for lang in language.split('; '):
+        if lang == 'German':
+            etree.SubElement(langusage, 'language', ident='de').text = lang
+        if lang == 'English':
+            etree.SubElement(langusage, 'language', ident='en').text = lang
 
     return header
 
