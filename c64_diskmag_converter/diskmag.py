@@ -1,9 +1,10 @@
-from c64_diskmag_converter import *
-from c64_diskmag_converter import *
+from c64_diskmag_converter.text_processing import *
+from c64_diskmag_converter.xml_markup_creator import *
 from d64 import DiskImage
 import pandas as pd
 from pathlib import Path
 import re
+from lxml import etree
 
 data_dir = os.path.join(os.path.dirname(__file__), 'data')
 issues = os.path.join(data_dir, 'c64_diskmag_issues.csv')

@@ -103,6 +103,7 @@ def replace_alt_umlauts(string: str) -> str:
 
 def replace_custom_umlauts(text: str):
     """
+    The function tries to replace special characters with german umlauts and scharf-s
     :param text: string, where the umlauts were encoded with
     other characters
     :return: string with re-coded umlauts

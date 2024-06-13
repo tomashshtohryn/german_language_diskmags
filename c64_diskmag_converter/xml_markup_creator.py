@@ -1,4 +1,7 @@
-from c64_diskmag_converter import *
+from c64_diskmag_converter.text_processing import *
+from lxml import etree
+from datetime import datetime
+import pandas as pd
 
 
 def attach_header(root: etree.Element,
@@ -8,7 +11,7 @@ def attach_header(root: etree.Element,
                   principal: str,
                   record: pd.Series) -> etree.SubElement:
     """
-    Function to attach a header to TEI document.
+    Attaches a header to TEI document
     :param root:
     :param image_number:
     :param series:
@@ -88,7 +91,7 @@ def attach_front(parent: etree.Element, directory: list) -> etree.SubElement:
 
 def attach_text_div(parent, metadata: TextMetaData) -> etree.SubElement:
     """
-
+    Attaches a div element to the text area
     :param parent:
     :param metadata:
     :return:
